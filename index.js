@@ -3,6 +3,8 @@ var os = require('os');
 
 var token = process.env.SLACK_TOKEN;
 
+var storage_key = 'queue';
+
 var controller = Botkit.slackbot({
 	json_file_store: 'notebook',
 	// reconnect to Slack RTM when connection goes bad
@@ -29,6 +31,8 @@ if (token) {
 	require('beepboop-botkit').start(controller, {debug: true});
 }
 
+initializeStorage(controller);
+
 controller.on('bot_channel_join', function (bot, message) {
 	bot.reply(message, "I'm here!");
 });
@@ -43,89 +47,74 @@ controller.hears(['hello', 'hi'], ['direct_message'], function (bot, message) {
 });
 
 controller.hears(['next'], ['direct_mention', 'direct_message', 'mention'], function (bot, message) {
-
-	sayWhoIsNextInReleaseQueue(bot, message);
+	sayWhoIsNextInQueue(bot, message);
 });
 
-controller.hears(['queue'], ['direct_mention', 'direct_message'], function (bot, message) {
+controller.hears(['queue', 'list'], ['direct_mention', 'direct_message'], function (bot, message) {
 
-	controller.storage.teams.get(message.team, function (error, team_data) {
+	loadQueue(function (error, data) {
 
-		if (team_data == undefined || team_data.release_queue.length == 0) {
+		if (data.release_queue.length == 0) {
 			bot.reply(message, 'The release queue is empty!')
 		} else {
-			var list = team_data.release_queue.reduce(function (result, user) {
-				return result + '<@' + user + '>\n';
-			}, '');
+			var list = data.release_queue.map(function (user_id) {
+				return '<@' + user_id + '>';
+			}).join('\n');
+
 			bot.reply(message, 'Current release queue in order:\n' + list)
 		}
-	})
+	});
 });
 
 controller.hears(['add'], ['direct_mention', 'direct_message'], function (bot, message) {
 
 	var users_to_add = getMentionedUsers(bot, message);
-	if (users_to_add == null) {
+	if (!users_to_add) {
 		users_to_add = [message.user];
 	}
 
-	controller.storage.teams.get(message.team, function (error, team_data) {
-
-		if (team_data == undefined) {
-			team_data = {id: message.team, release_queue: []}
-		}
+	loadQueue(function (error, data) {
 
 		for (idx in users_to_add) {
 			var user_id = users_to_add[idx];
 
-			if (team_data.release_queue.indexOf(user_id) != -1) {
+			if (data.release_queue.indexOf(user_id) != -1) {
 				bot.reply(message, '<@' + user_id + '> is already in the release queue')
 			} else {
-				team_data.release_queue.push(user_id);
+				data.release_queue.push(user_id);
 
 				bot.reply(message, 'I\'m adding <@' + user_id + '> to the end of the release queue')
 			}
 		}
 
-		controller.storage.teams.save(team_data, function (error) {
-			if (error != undefined) {
-				console.error(error)
-			}
-		})
-	})
+		saveQueue(data);
+	});
 });
 
 controller.hears(['remove'], ['direct_mention', 'direct_message'], function (bot, message) {
 
 	var users_to_remove = getMentionedUsers(bot, message);
-	if (users_to_remove == null) {
+	if (!users_to_remove) {
 		users_to_remove = [message.user];
 	}
 
-	controller.storage.teams.get(message.team, function (error, team_data) {
-		if (team_data == undefined) {
-			team_data = {id: message.team, release_queue: []}
-		}
+	loadQueue(function (error, data) {
 
 		for (idx in users_to_remove) {
 			var user_id = users_to_remove[idx];
 
-			var index = team_data.release_queue.indexOf(user_id);
+			var index = data.release_queue.indexOf(user_id);
 			if (index < 0) {
 				bot.reply(message, '<@' + user_id + '> is not in the release queue')
 			} else {
-				team_data.release_queue.splice(index, 1);
+				data.release_queue.splice(index, 1);
 
 				bot.reply(message, 'I\'m removing <@' + user_id + '> from the release queue')
 			}
 		}
 
-		controller.storage.teams.save(team_data, function (error) {
-			if (error != undefined) {
-				console.error(error)
-			}
-		})
-	})
+		saveQueue(data);
+	});
 });
 
 controller.hears(['cleanup'], ['direct_mention', 'direct_message'], function (bot, message) {
@@ -136,13 +125,7 @@ controller.hears(['cleanup'], ['direct_mention', 'direct_message'], function (bo
 			{
 				pattern: bot.utterances.yes,
 				callback: function (response, convo) {
-
-					var team_data = {id: message.team, release_queue: []};
-					controller.storage.teams.save(team_data, function (error) {
-						if (error != undefined) {
-							console.error(error)
-						}
-					});
+					saveQueue({id: storage_key, release_queue: []});
 
 					convo.say('Done!');
 					convo.next();
@@ -168,38 +151,30 @@ controller.hears(['cleanup'], ['direct_mention', 'direct_message'], function (bo
 
 controller.hears(['skip'], ['direct_mention', 'direct_message'], function (bot, message) {
 
-	controller.storage.teams.get(message.team, function (error, team_data) {
+	loadQueue(function (error, data) {
 
-		if (team_data == undefined) {
-			team_data = {id: message.team, release_queue: []}
-		}
-
-		if (team_data.release_queue.length == 0) {
+		if (data.release_queue.length == 0) {
 			bot.reply(message, 'The release queue is empty!')
 		} else {
-			var index = team_data.release_queue.indexOf(message.user);
+			var index = data.release_queue.indexOf(message.user);
 			if (index < 0) {
 				bot.reply(message, '<@' + message.user + '> you are not in the release queue')
-			} else if (index == 0 && team_data.release_queue.length == 1) {
+			} else if (index == 0 && data.release_queue.length == 1) {
 				bot.reply(message, '<@' + message.user + '> you are the only one in the release queue')
 			} else {
-				team_data.release_queue.splice(index, 1);
-				team_data.release_queue.push(message.user);
+				data.release_queue.splice(index, 1);
+				data.release_queue.push(message.user);
 
 				bot.reply(message, 'I\'m moving you <@' + message.user + '> at the end of the release queue')
 			}
 		}
 
-		controller.storage.teams.save(team_data, function (error) {
-			if (error != undefined) {
-				console.error(error)
-			}
-		})
-	})
+		saveQueue(data);
+	});
 });
 
 controller.hears('A deployment has just been started!', ['ambient'], function (bot, message) {
-	sayWhoIsNextInReleaseQueue(bot, message)
+	sayWhoIsNextInQueue(bot, message)
 });
 
 controller.hears('The deployment is complete, send out the release notes!', ['ambient'], function (bot, message) {
@@ -234,52 +209,71 @@ controller.hears('.*', ['direct_message', 'direct_mention'], function (bot, mess
 	bot.reply(message, 'Sorry <@' + message.user + '>, I don\'t understand. Try: `@' + bot.identity.name + ' help`')
 });
 
-function sayWhoIsNextInReleaseQueue(bot, message) {
-	controller.storage.teams.get(message.team, function (error, team_data) {
-		if (team_data == undefined || team_data.release_queue.length == 0) {
+function sayWhoIsNextInQueue(bot, message) {
+	loadQueue(function (error, data) {
+		if (data.release_queue.length == 0) {
 			bot.reply(message, 'The release queue is empty!')
 		} else {
-			bot.reply(message, 'Next in the release queue is <@' + team_data.release_queue[0] + '>')
+			bot.reply(message, 'Next in the release queue is <@' + data.release_queue[0] + '>')
 		}
-	})
+	});
 }
 
 function getMentionedUsers(bot, message) {
-	var botId = bot.identity.id;
-
-	var mentioned_users;
-	if (message != undefined) {
-		mentioned_users = message.text.match(/<@\w+>/g)
-	}
-
-	if (mentioned_users instanceof Array) {
-		mentioned_users = mentioned_users.map(function (value) {
-			return value.match(/\w+/)[0]
-		});
-
-		var index = mentioned_users.indexOf(botId);
-		if (index != -1) {
-			mentioned_users.splice(index, 1);
+	if (message) {
+		var mentioned_users = message.text.match(/<@\w+>/g);
+		if (mentioned_users instanceof Array) {
+			return mentioned_users.map(function (value) {
+				return value.match(/\w+/)[0];
+			}).filter(function (element) {
+				return element != bot.identity.id;
+			});
 		}
 	}
 
-	return mentioned_users;
+	return null;
+}
+
+function initializeStorage() {
+	console.log('Initialising storage');
+
+	loadQueue(function (error, data) {
+
+		if (!data) {
+			saveQueue({id: storage_key, release_queue: []});
+		}
+	});
+}
+
+function saveQueue(data) {
+	controller.storage.teams.save(data, function (error) {
+		if (error) {
+			throw new Error(error)
+		}
+	});
+}
+
+function loadQueue(func) {
+	controller.storage.teams.get(storage_key, func);
 }
 
 function formatUptime(uptime) {
-	var unit = 'second';
-	if (uptime > 60) {
-		uptime = uptime / 60;
-		unit = 'minute';
+
+	var date = new Date(uptime * 1000);
+	var hh = date.getUTCHours();
+	var mm = date.getUTCMinutes();
+	var ss = date.getSeconds();
+
+	var result = [];
+	if (hh > 0) {
+		result.push(hh + ' hr');
 	}
-	if (uptime > 60) {
-		uptime = uptime / 60;
-		unit = 'hour';
+	if (mm > 0) {
+		result.push(mm + ' min');
 	}
-	if (uptime != 1) {
-		unit = unit + 's';
+	if (ss > 0) {
+		result.push(ss + ' sec');
 	}
 
-	uptime = uptime + ' ' + unit;
-	return uptime;
+	return result.join(' ');
 }
