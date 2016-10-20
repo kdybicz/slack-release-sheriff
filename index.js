@@ -202,6 +202,10 @@ controller.hears('A deployment has just been started!', ['ambient'], function (b
 	sayWhoIsNextInReleaseQueue(bot, message)
 });
 
+controller.hears('The deployment is complete, send out the release notes!', ['ambient'], function (bot, message) {
+	bot.say(message, ":boom: Another one bites the dust! :trainonfire:")
+});
+
 controller.hears(['uptime', 'identify yourself', 'who are you', 'what is your name'], 'direct_message,direct_mention,mention', function (bot, message) {
 
 	var hostname = os.hostname();
