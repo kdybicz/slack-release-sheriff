@@ -12,7 +12,7 @@ var controller = Botkit.slackbot({
 
 // Assume single team mode if we have a SLACK_TOKEN
 if (token) {
-	console.log('Starting in single-team mode')
+	console.log('Starting in single-team mode');
 	controller.spawn({
 		token: token,
 		retry: Infinity
@@ -72,124 +72,112 @@ controller.hears(['list'], ['direct_mention', 'direct_message'], function (bot, 
 
 controller.hears(['add'], ['direct_mention', 'direct_message'], function (bot, message) {
 
-	bot.api.users.info({user: message.user}, function (error, response) {
+	controller.storage.teams.get(message.team, function (error, team_data) {
 
-		controller.storage.teams.get(message.team, function (error, team_data) {
+		if (team_data == undefined) {
+			team_data = {id: message.team, release_queue: []}
+		}
 
-			if (team_data == undefined) {
-				team_data = {id: message.team, release_queue: []}
+		if (team_data.release_queue.indexOf(message.user) != -1) {
+			bot.reply(message, '<@' + message.user + '> you are already in the release queue')
+		} else {
+			team_data.release_queue.push(message.user);
+
+			bot.reply(message, 'I\'m adding you <@' + message.user + '> to the release queue')
+		}
+
+		controller.storage.teams.save(team_data, function (error) {
+			if (error != undefined) {
+				console.error(error)
 			}
-
-			if (team_data.release_queue.indexOf(response.user.name) != -1) {
-				bot.reply(message, '<@' + response.user.name + '> you are already in the release queue')
-			} else {
-				team_data.release_queue.push(response.user.name);
-
-				bot.reply(message, 'I\'m adding you <@' + response.user.name + '> to the release queue')
-			}
-
-			controller.storage.teams.save(team_data, function (error) {
-				if (error != undefined) {
-					console.error(error)
-				}
-			})
 		})
 	})
 });
 
 controller.hears(['remove'], ['direct_mention', 'direct_message'], function (bot, message) {
 
-	bot.api.users.info({user: message.user}, function (error, response) {
+	controller.storage.teams.get(message.team, function (error, team_data) {
+		if (team_data == undefined) {
+			team_data = {id: message.team, release_queue: []}
+		}
 
-		controller.storage.teams.get(message.team, function (error, team_data) {
-			if (team_data == undefined) {
-				team_data = {id: message.team, release_queue: []}
+		var index = team_data.release_queue.indexOf(message.user);
+		if (index < 0) {
+			bot.reply(message, '<@' + message.user + '> you are not in the release queue')
+		} else {
+			team_data.release_queue.splice(index, 1);
+
+			bot.reply(message, 'I\'m removing you <@' + message.user + '> from the release queue')
+		}
+
+		controller.storage.teams.save(team_data, function (error) {
+			if (error != undefined) {
+				console.error(error)
 			}
-
-			var index = team_data.release_queue.indexOf(response.user.name);
-			if (index < 0) {
-				bot.reply(message, '<@' + response.user.name + '> you are not in the release queue')
-			} else {
-				team_data.release_queue.splice(index, 1);
-
-				bot.reply(message, 'I\'m removing you <@' + response.user.name + '> from the release queue')
-			}
-
-			controller.storage.teams.save(team_data, function (error) {
-				if (error != undefined) {
-					console.error(error)
-				}
-			})
 		})
-	});
+	})
 });
 
 controller.hears(['cleanup'], ['direct_mention', 'direct_message'], function (bot, message) {
 
-	bot.api.users.info({user: message.user}, function (error, response) {
+	bot.startConversation(message, function (err, convo) {
 
-		bot.startConversation(message, function (err, convo) {
+		convo.ask('Are you sure you want me to remove everyone from release queue?', [
+			{
+				pattern: bot.utterances.yes,
+				callback: function (response, convo) {
 
-			convo.ask('Are you sure you want me to remove everyone from release queue?', [
-				{
-					pattern: bot.utterances.yes,
-					callback: function (response, convo) {
+					var team_data = {id: message.team, release_queue: []};
+					controller.storage.teams.save(team_data, function (error) {
+						if (error != undefined) {
+							console.error(error)
+						}
+					});
 
-						var team_data = {id: message.team, release_queue: []};
-						controller.storage.teams.save(team_data, function (error) {
-							if (error != undefined) {
-								console.error(error)
-							}
-						});
-
-						convo.say('Done!');
-						convo.next();
-					}
-				},
-				{
-					pattern: bot.utterances.no,
-					default: true,
-					callback: function (response, convo) {
-						convo.say('*Phew!*');
-						convo.next();
-					}
+					convo.say('Done!');
+					convo.next();
 				}
-			]);
-		});
+			},
+			{
+				pattern: bot.utterances.no,
+				default: true,
+				callback: function (response, convo) {
+					convo.say('*Phew!*');
+					convo.next();
+				}
+			}
+		]);
 	});
 });
 
 controller.hears(['skip'], ['direct_mention', 'direct_message'], function (bot, message) {
 
-	bot.api.users.info({user: message.user}, function (error, response) {
+	controller.storage.teams.get(message.team, function (error, team_data) {
 
-		controller.storage.teams.get(message.team, function (error, team_data) {
+		if (team_data == undefined) {
+			team_data = {id: message.team, release_queue: []}
+		}
 
-			if (team_data == undefined) {
-				team_data = {id: message.team, release_queue: []}
-			}
-
-			if (team_data.release_queue.length == 0) {
-				bot.reply(message, 'The release queue is empty!')
+		if (team_data.release_queue.length == 0) {
+			bot.reply(message, 'The release queue is empty!')
+		} else {
+			var index = team_data.release_queue.indexOf(message.user);
+			if (index < 0) {
+				bot.reply(message, '<@' + message.user + '> you are not in the release queue')
+			} else if (index == 0 && team_data.release_queue.length == 1) {
+				bot.reply(message, '<@' + message.user + '> you are the only one in the release queue')
 			} else {
-				var index = team_data.release_queue.indexOf(response.user.name);
-				if (index < 0) {
-					bot.reply(message, '<@' + response.user.name + '> you are not in the release queue')
-				} else if (index == 0 && team_data.release_queue.length == 1) {
-					bot.reply(message, '<@' + response.user.name + '> you are the only one in the release queue')
-				} else {
-					team_data.release_queue.splice(index, 1);
-					team_data.release_queue.push(response.user.name);
+				team_data.release_queue.splice(index, 1);
+				team_data.release_queue.push(message.user);
 
-					bot.reply(message, 'I\'m moving you <@' + response.user.name + '> at the end of the release queue')
-				}
+				bot.reply(message, 'I\'m moving you <@' + message.user + '> at the end of the release queue')
 			}
+		}
 
-			controller.storage.teams.save(team_data, function (error) {
-				if (error != undefined) {
-					console.error(error)
-				}
-			})
+		controller.storage.teams.save(team_data, function (error) {
+			if (error != undefined) {
+				console.error(error)
+			}
 		})
 	})
 });
@@ -200,9 +188,7 @@ controller.hears(['cleanup'], ['direct_mention', 'direct_message'], function (bo
 });
 
 controller.hears('A deployment has just been started!', ['message_received'], function (bot, message) {
-	bot.api.users.info({user: message.user}, function (error, response) {
-		bot.reply(message, 'Next in the release queue is: <@' + response.user.name + '>')
-	})
+	bot.reply(message, 'Next in the release queue is: <@' + message.user + '>')
 });
 
 controller.hears('.*', ['mention'], function (bot, message) {
@@ -243,7 +229,7 @@ controller.hears('help', ['direct_message', 'direct_mention'], function (bot, me
 		'`@' + bot.identity.name + ' cleanup` to remove all from the release queue.\n' +
 		'`@' + bot.identity.name + ' next` for next in the release queue.\n' +
 		'`@' + bot.identity.name + ' list` shows whole release queue.\n' +
-		'`@' + bot.identity.name + ' help` to see this again.'
+		'`@' + bot.identity.name + ' help` to see this again.';
 	bot.reply(message, help)
 });
 
