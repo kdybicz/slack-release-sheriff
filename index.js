@@ -223,11 +223,11 @@ controller.hears('help', ['direct_message', 'direct_mention'], function (bot, me
 });
 
 controller.hears('.*', ['mention'], function (bot, message) {
-	bot.reply(message, 'Sorry, I don\'t get that. Can you be more specific?')
+	bot.reply(message, 'I don\'t like when people are talking behind my back :(')
 });
 
 controller.hears('.*', ['direct_message', 'direct_mention'], function (bot, message) {
-	bot.reply(message, 'Sorry <@' + message.user + '>, I don\'t understand. \n')
+	bot.reply(message, 'Sorry <@' + message.user + '>, I don\'t understand. Try: `@' + bot.identity.name + ' help`')
 });
 
 function sayWhoIsNextInReleaseQueue(bot, message) {
