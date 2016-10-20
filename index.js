@@ -16,9 +16,9 @@ if (token) {
 	controller.spawn({
 		token: token,
 		retry: Infinity
-	}).startRTM(function (err, bot, payload) {
-		if (err) {
-			throw new Error(err)
+	}).startRTM(function (error, bot, payload) {
+		if (error) {
+			throw new Error(error)
 		}
 
 		console.log('Connected to Slack RTM')
@@ -130,7 +130,7 @@ controller.hears(['remove'], ['direct_mention', 'direct_message'], function (bot
 
 controller.hears(['cleanup'], ['direct_mention', 'direct_message'], function (bot, message) {
 
-	bot.startConversation(message, function (err, convo) {
+	bot.startConversation(message, function (error, convo) {
 
 		convo.ask('Are you sure you want me to remove everyone from release queue?', [
 			{
@@ -150,9 +150,15 @@ controller.hears(['cleanup'], ['direct_mention', 'direct_message'], function (bo
 			},
 			{
 				pattern: bot.utterances.no,
-				default: true,
 				callback: function (response, convo) {
 					convo.say('*Phew!*');
+					convo.next();
+				}
+			},
+			{
+				default: true,
+				callback: function (reply, convo) {
+					convo.repeat();
 					convo.next();
 				}
 			}
