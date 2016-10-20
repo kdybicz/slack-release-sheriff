@@ -42,28 +42,27 @@ controller.hears(['hello', 'hi'], ['direct_message'], function (bot, message) {
 	bot.reply(message, 'It\'s nice to talk to you directly.');
 });
 
-controller.hears(['next'], ['direct_mention', 'direct_message'], function (bot, message) {
+controller.hears(['next'], ['direct_mention', 'direct_message', 'mention'], function (bot, message) {
 
 	controller.storage.teams.get(message.team, function (error, team_data) {
 		if (team_data == undefined || team_data.release_queue.length == 0) {
 			bot.reply(message, 'The release queue is empty!')
 		} else {
-			console.log(JSON.stringify(team_data.release_queue));
 			bot.reply(message, 'Next in the release queue is <@' + team_data.release_queue[0] + '>')
 		}
 
 	})
 });
 
-controller.hears(['list'], ['direct_mention', 'direct_message'], function (bot, message) {
+controller.hears(['queue'], ['direct_mention', 'direct_message'], function (bot, message) {
 
 	controller.storage.teams.get(message.team, function (error, team_data) {
 
 		if (team_data == undefined || team_data.release_queue.length == 0) {
 			bot.reply(message, 'The release queue is empty!')
 		} else {
-			var list = team_data.release_queue.reduce(function (total, currentValue) {
-				return total + '<@' + currentValue + '>\n';
+			var list = team_data.release_queue.reduce(function (result, user) {
+				return result + '<@' + user + '>\n';
 			}, '');
 			bot.reply(message, 'Current release queue in order:\n' + list)
 		}
@@ -228,7 +227,7 @@ controller.hears('help', ['direct_message', 'direct_mention'], function (bot, me
 		'`@' + bot.identity.name + ' remove` to remove yourself from the release queue.\n' +
 		'`@' + bot.identity.name + ' cleanup` to remove all from the release queue.\n' +
 		'`@' + bot.identity.name + ' next` for next in the release queue.\n' +
-		'`@' + bot.identity.name + ' list` shows whole release queue.\n' +
+		'`@' + bot.identity.name + ' queue` shows whole release queue.\n' +
 		'`@' + bot.identity.name + ' help` to see this again.';
 	bot.reply(message, help)
 });
