@@ -44,14 +44,7 @@ controller.hears(['hello', 'hi'], ['direct_message'], function (bot, message) {
 
 controller.hears(['next'], ['direct_mention', 'direct_message', 'mention'], function (bot, message) {
 
-	controller.storage.teams.get(message.team, function (error, team_data) {
-		if (team_data == undefined || team_data.release_queue.length == 0) {
-			bot.reply(message, 'The release queue is empty!')
-		} else {
-			bot.reply(message, 'Next in the release queue is <@' + team_data.release_queue[0] + '>')
-		}
-
-	})
+	sayWhoIsNextInReleaseQueue(bot, message);
 });
 
 controller.hears(['queue'], ['direct_mention', 'direct_message'], function (bot, message) {
@@ -71,18 +64,27 @@ controller.hears(['queue'], ['direct_mention', 'direct_message'], function (bot,
 
 controller.hears(['add'], ['direct_mention', 'direct_message'], function (bot, message) {
 
+	var users_to_add = getMentionedUsers(bot, message);
+	if (users_to_add == null) {
+		users_to_add = [message.user];
+	}
+
 	controller.storage.teams.get(message.team, function (error, team_data) {
 
 		if (team_data == undefined) {
 			team_data = {id: message.team, release_queue: []}
 		}
 
-		if (team_data.release_queue.indexOf(message.user) != -1) {
-			bot.reply(message, '<@' + message.user + '> you are already in the release queue')
-		} else {
-			team_data.release_queue.push(message.user);
+		for (idx in users_to_add) {
+			var user_id = users_to_add[idx];
 
-			bot.reply(message, 'I\'m adding you <@' + message.user + '> to the release queue')
+			if (team_data.release_queue.indexOf(user_id) != -1) {
+				bot.reply(message, '<@' + user_id + '> is already in the release queue')
+			} else {
+				team_data.release_queue.push(user_id);
+
+				bot.reply(message, 'I\'m adding <@' + user_id + '> to the end of the release queue')
+			}
 		}
 
 		controller.storage.teams.save(team_data, function (error) {
@@ -95,18 +97,27 @@ controller.hears(['add'], ['direct_mention', 'direct_message'], function (bot, m
 
 controller.hears(['remove'], ['direct_mention', 'direct_message'], function (bot, message) {
 
+	var users_to_remove = getMentionedUsers(bot, message);
+	if (users_to_remove == null) {
+		users_to_remove = [message.user];
+	}
+
 	controller.storage.teams.get(message.team, function (error, team_data) {
 		if (team_data == undefined) {
 			team_data = {id: message.team, release_queue: []}
 		}
 
-		var index = team_data.release_queue.indexOf(message.user);
-		if (index < 0) {
-			bot.reply(message, '<@' + message.user + '> you are not in the release queue')
-		} else {
-			team_data.release_queue.splice(index, 1);
+		for (idx in users_to_remove) {
+			var user_id = users_to_remove[idx];
 
-			bot.reply(message, 'I\'m removing you <@' + message.user + '> from the release queue')
+			var index = team_data.release_queue.indexOf(user_id);
+			if (index < 0) {
+				bot.reply(message, '<@' + user_id + '> is not in the release queue')
+			} else {
+				team_data.release_queue.splice(index, 1);
+
+				bot.reply(message, 'I\'m removing <@' + user_id + '> from the release queue')
+			}
 		}
 
 		controller.storage.teams.save(team_data, function (error) {
@@ -181,17 +192,8 @@ controller.hears(['skip'], ['direct_mention', 'direct_message'], function (bot, 
 	})
 });
 
-controller.hears(['cleanup'], ['direct_mention', 'direct_message'], function (bot, message) {
-
-	bot.reply(message, 'I\'m removing all people from the release queue')
-});
-
-controller.hears('A deployment has just been started!', ['message_received'], function (bot, message) {
-	bot.reply(message, 'Next in the release queue is: <@' + message.user + '>')
-});
-
-controller.hears('.*', ['mention'], function (bot, message) {
-	bot.reply(message, 'Sorry, I don\'t get that. Can you be more specific?')
+controller.hears('A deployment has just been started!', ['ambient'], function (bot, message) {
+	sayWhoIsNextInReleaseQueue(bot, message)
 });
 
 controller.hears(['uptime', 'identify yourself', 'who are you', 'what is your name'], 'direct_message,direct_mention,mention', function (bot, message) {
@@ -201,6 +203,58 @@ controller.hears(['uptime', 'identify yourself', 'who are you', 'what is your na
 
 	bot.reply(message, ':robot_face: I am a bot named <@' + bot.identity.name + '>. I have been running for ' + uptime + ' on ' + hostname + '.');
 });
+
+controller.hears('help', ['direct_message', 'direct_mention'], function (bot, message) {
+	var help = 'I will respond to the following messages: \n' +
+		'`@' + bot.identity.name + ' hi` for a simple message.\n' +
+		'`@' + bot.identity.name + ' add` to add yourself at the end of release queue.\n' +
+		'`@' + bot.identity.name + ' remove` to remove yourself from the release queue.\n' +
+		'`@' + bot.identity.name + ' cleanup` to remove all from the release queue.\n' +
+		'`@' + bot.identity.name + ' next` for next in the release queue.\n' +
+		'`@' + bot.identity.name + ' queue` shows whole release queue.\n' +
+		'`@' + bot.identity.name + ' help` to see this again.';
+	bot.reply(message, help)
+});
+
+controller.hears('.*', ['mention'], function (bot, message) {
+	bot.reply(message, 'Sorry, I don\'t get that. Can you be more specific?')
+});
+
+controller.hears('.*', ['direct_message', 'direct_mention'], function (bot, message) {
+	bot.reply(message, 'Sorry <@' + message.user + '>, I don\'t understand. \n')
+});
+
+function sayWhoIsNextInReleaseQueue(bot, message) {
+	controller.storage.teams.get(message.team, function (error, team_data) {
+		if (team_data == undefined || team_data.release_queue.length == 0) {
+			bot.reply(message, 'The release queue is empty!')
+		} else {
+			bot.reply(message, 'Next in the release queue is <@' + team_data.release_queue[0] + '>')
+		}
+	})
+}
+
+function getMentionedUsers(bot, message) {
+	var botId = bot.identity.id;
+
+	var mentioned_users;
+	if (message != undefined) {
+		mentioned_users = message.text.match(/<@\w+>/g)
+	}
+
+	if (mentioned_users instanceof Array) {
+		mentioned_users = mentioned_users.map(function (value) {
+			return value.match(/\w+/)[0]
+		});
+
+		var index = mentioned_users.indexOf(botId);
+		if (index != -1) {
+			mentioned_users.splice(index, 1);
+		}
+	}
+
+	return mentioned_users;
+}
 
 function formatUptime(uptime) {
 	var unit = 'second';
@@ -219,19 +273,3 @@ function formatUptime(uptime) {
 	uptime = uptime + ' ' + unit;
 	return uptime;
 }
-
-controller.hears('help', ['direct_message', 'direct_mention'], function (bot, message) {
-	var help = 'I will respond to the following messages: \n' +
-		'`@' + bot.identity.name + ' hi` for a simple message.\n' +
-		'`@' + bot.identity.name + ' add` to add yourself at the end of release queue.\n' +
-		'`@' + bot.identity.name + ' remove` to remove yourself from the release queue.\n' +
-		'`@' + bot.identity.name + ' cleanup` to remove all from the release queue.\n' +
-		'`@' + bot.identity.name + ' next` for next in the release queue.\n' +
-		'`@' + bot.identity.name + ' queue` shows whole release queue.\n' +
-		'`@' + bot.identity.name + ' help` to see this again.';
-	bot.reply(message, help)
-});
-
-controller.hears('.*', ['direct_message', 'direct_mention'], function (bot, message) {
-	bot.reply(message, 'Sorry <@' + message.user + '>, I don\'t understand. \n')
-});
