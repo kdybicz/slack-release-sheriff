@@ -1,0 +1,382 @@
+{
+  "data": [
+	{
+	  "text": "A deployment has just been started!",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "deploy_started"
+		}
+	  ]
+	},
+	{
+	  "text": "The deployment is complete, send out the release notes!",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "deploy_finished"
+		}
+	  ]
+	},
+	{
+	  "text": "add me please",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "add_to_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "add me to the queue",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "add_to_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "clean the queue",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "cleanup_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "cleanup",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "cleanup_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "czesc",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "greating"
+		}
+	  ]
+	},
+	{
+	  "text": "cześć",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "greating"
+		}
+	  ]
+	},
+	{
+	  "text": "hello",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "hello"
+		}
+	  ]
+	},
+	{
+	  "text": "hi",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "hello"
+		}
+	  ]
+	},
+	{
+	  "text": "list",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "list_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "move me to bottom",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "skip_to_end_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "move me to end",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "skip_to_end_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "move me to the end",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "skip_to_end_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "next?",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "next_in_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "please add me",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "add_to_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "please add me to the queue",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "add_to_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "please remove me",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "remove_from_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "please remove me from the queue",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "remove_from_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "queue",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "list_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "remove all",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "remove_from_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "remove me",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "remove_from_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "remove me from the queue",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "remove_from_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "show me the queue",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "list_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "skip",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "skip_to_end_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "skip the queue",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "skip_to_end_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "status",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "list_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "status?",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "list_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "uptime",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "identify_yourself"
+		}
+	  ]
+	},
+	{
+	  "text": "what are you?",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "identify_yourself"
+		}
+	  ]
+	},
+	{
+	  "text": "what is the status of release queue?",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "list_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "what is the status?",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "list_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "what is your name?",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "identify_yourself"
+		}
+	  ]
+	},
+	{
+	  "text": "what’s up",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "greating"
+		}
+	  ]
+	},
+	{
+	  "text": "who are you?",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "identify_yourself"
+		}
+	  ]
+	},
+	{
+	  "text": "who is in release queue?",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "list_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "who next?",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "next_in_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "who's next",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "next_in_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "whos next?",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "next_in_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "who’s next",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "next_in_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "who’s next in release queue?",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "next_in_queue"
+		}
+	  ]
+	},
+	{
+	  "text": "who’s next?",
+	  "entities": [
+		{
+		  "entity": "intent",
+		  "value": "next_in_queue"
+		}
+	  ]
+	}
+  ]
+}
