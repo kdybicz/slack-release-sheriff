@@ -34,7 +34,7 @@
 	"what is the status?",
 	"who is in release queue?"
   ],
-  "skip_to_end_queue": [
+  "move_to_end_of_queue": [
 	"move me to bottom",
 	"move me to end",
 	"move me to the end",
