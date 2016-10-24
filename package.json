@@ -1,14 +1,14 @@
 {
-  "name": "node-slack-bot",
+  "name": "slack-release-sheriff",
   "version": "1.0.0",
-  "description": "A sample Beep Boop Node.js Slackbot",
+  "description": "Release Sheriff is a Slack bot tryung to help keep a track on single feature releases.",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/beepboophq/node-slack-bot.git"
+    "url": "git+https://github.com/kdybicz/slack-release-sheriff.git"
   },
   "keywords": [
     "slackbot",
@@ -18,9 +18,9 @@
   "author": "",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/beepboophq/node-slack-bot/issues"
+    "url": "https://github.com/kdybicz/slack-release-sheriff/issues"
   },
-  "homepage": "https://github.com/beepboophq/node-slack-bot#readme",
+  "homepage": "https://github.com/kdybicz/slack-release-sheriff#readme",
   "dependencies": {
     "beepboop-botkit": "^1.4.1",
     "botkit": "^0.4.0",

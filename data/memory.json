@@ -1,0 +1,66 @@
+{
+  "deploy_started": [
+	"A deployment has just been started!"
+  ],
+  "deploy_finished": [
+	"The deployment is complete, send out the release notes!"
+  ],
+  "add_to_queue": [
+	"add me please",
+	"add me to the queue",
+	"please add me",
+	"please add me to the queue"
+  ],
+  "cleanup_queue": [
+	"clean the queue",
+	"cleanup"
+  ],
+  "greating": [
+	"czesc",
+	"cześć",
+	"what’s up"
+  ],
+  "hello": [
+	"hello",
+	"hi"
+  ],
+  "list_queue": [
+	"list",
+	"queue",
+	"show me the queue",
+	"status",
+	"status?",
+	"what is the status of release queue?",
+	"what is the status?",
+	"who is in release queue?"
+  ],
+  "skip_to_end_queue": [
+	"move me to bottom",
+	"move me to end",
+	"move me to the end",
+	"skip",
+	"skip the queue"
+  ],
+  "next_in_queue": [
+	"next?",
+	"who next?",
+	"who's next",
+	"whos next?",
+	"who’s next",
+	"who’s next in release queue?",
+	"who’s next?"
+  ],
+  "remove_from_queue": [
+	"please remove me",
+	"please remove me from the queue",
+	"remove all",
+	"remove me",
+	"remove me from the queue"
+  ],
+  "identify_yourself": [
+	"uptime",
+	"what are you?",
+	"what is your name?",
+	"who are you?"
+  ]
+}

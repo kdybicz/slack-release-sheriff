@@ -274,15 +274,16 @@ function initializeStorage() {
 }
 
 function learn() {
-	var expressionsText = fs.readFileSync(__dirname + '/data/expressions.json').toString();
-	var expressions = JSON.parse(expressionsText).data;
+	var expressionsText = fs.readFileSync(__dirname + '/data/memory.json').toString();
+	var expressions = JSON.parse(expressionsText);
 
-	expressions.forEach(function (expression) {
-		var label = expression.entities[0].value;
-		var phrase = expression.text;
+	Object.keys(expressions).forEach(function (label) {
+		var phrases = expressions[label];
 
-		console.log('Ingesting example for ' + label + ': ' + phrase);
-		classifier.addDocument(phrase.toLowerCase(), label);
+		phrases.forEach(function (phrase) {
+			console.log('Ingesting example for ' + label + ': ' + phrase);
+			classifier.addDocument(phrase.toLowerCase(), label);
+		});
 	});
 
 	classifier.train();
