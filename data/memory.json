@@ -1,9 +1,10 @@
 {
-  "deploy_started": [
-	"A deployment has just been started!"
-  ],
-  "deploy_finished": [
-	"The deployment is complete, send out the release notes!"
+  "hello": [
+	"hello",
+	"hi",
+	"czesc",
+	"cześć",
+	"what’s up"
   ],
   "add_to_queue": [
 	"add me please",
@@ -11,18 +12,16 @@
 	"please add me",
 	"please add me to the queue"
   ],
+  "remove_from_queue": [
+	"please remove me",
+	"please remove me from the queue",
+	"remove all",
+	"remove me",
+	"remove me from the queue"
+  ],
   "cleanup_queue": [
 	"clean the queue",
 	"cleanup"
-  ],
-  "greating": [
-	"czesc",
-	"cześć",
-	"what’s up"
-  ],
-  "hello": [
-	"hello",
-	"hi"
   ],
   "list_queue": [
 	"list",
@@ -50,12 +49,11 @@
 	"who’s next in release queue?",
 	"who’s next?"
   ],
-  "remove_from_queue": [
-	"please remove me",
-	"please remove me from the queue",
-	"remove all",
-	"remove me",
-	"remove me from the queue"
+  "deploy_started": [
+	"A deployment has just been started!"
+  ],
+  "deploy_finished": [
+	"The deployment is complete, send out the release notes!"
   ],
   "identify_yourself": [
 	"uptime",
