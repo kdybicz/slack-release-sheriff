@@ -1,17 +1,15 @@
-var Botkit = require('botkit');
-var os = require('os');
+const Botkit = require('botkit');
 
-var NLP = require('natural');
-var sentiment = require('sentiment');
-var fs = require('fs');
+const os = require('os');
 
-var token = process.env.SLACK_TOKEN;
+const Queue = require('./src/queue');
+const queue = new Queue(process.env.TRELLO_APP_KEY, process.env.TRELLO_TOKEN);
 
-var storage_key = 'queue';
+const Brain = require('./src/brain');
+const brain = new Brain();
 
-var classifier = new NLP.LogisticRegressionClassifier();
 
-var controller = Botkit.slackbot({
+const controller = Botkit.slackbot({
 	json_file_store: 'notebook',
 	// reconnect to Slack RTM when connection goes bad
 	retry: Infinity,
@@ -19,47 +17,22 @@ var controller = Botkit.slackbot({
 });
 
 // Assume single team mode if we have a SLACK_TOKEN
-if (token) {
-	console.log('Starting in single-team mode');
-	controller.spawn({
-		token: token,
-		retry: Infinity
-	}).startRTM(function (error, bot, payload) {
-		if (error) {
-			throw new Error(error)
-		}
+console.log('Starting in single-team mode');
+controller.spawn({
+	token: process.env.SLACK_TOKEN,
+	retry: Infinity
+}).startRTM(function (error, bot, payload) {
+	if (error) {
+		throw new Error(error)
+	}
 
-		console.log('Connected to Slack RTM')
-	});
-// Otherwise assume multi-team mode - setup beep boop resourcer connection
-} else {
-	console.log('Starting in Beep Boop multi-team mode');
-	require('beepboop-botkit').start(controller, {debug: true});
-}
-
-initializeStorage(controller);
-learn();
-
-controller.changeEars(function (patterns, message) {
-
-	var guesses = classifier.getClassifications(message.text.toLowerCase());
-	var guess = guesses.reduce(toMaxValue);
-
-	var label = guess.value >= 0.5 ? guess.label : 'default_message';
-
-	var matches = false;
-	patterns.forEach(function (pattern) {
-		if (pattern == label) {
-			matches = true;
-		}
-	});
-
-	return matches;
+	console.log('Connected to Slack RTM')
 });
 
-function toMaxValue(x, y) {
-	return x && x.value > y.value ? x : y;
-}
+brain.learn();
+controller.changeEars(function (patterns, message) {
+	return brain.ears(patterns, message);
+});
 
 controller.on('bot_channel_join', function (bot, message) {
 	bot.reply(message, "I'm here!");
@@ -80,13 +53,13 @@ controller.hears('next_in_queue', 'direct_mention,direct_message,mention', funct
 
 controller.hears('list_queue', 'direct_mention,direct_message', function (bot, message) {
 
-	loadQueue(function (error, data) {
+	queue.load(function (error, data) {
 
 		if (data.release_queue.length == 0) {
 			bot.reply(message, 'The release queue is empty!')
 		} else {
-			var list = data.release_queue.map(function (user_id) {
-				return '<@' + user_id + '>';
+			var list = data.release_queue.map(function (user_name) {
+				return user_name;
 			}).join('\n');
 
 			bot.reply(message, 'Current release queue in order:\n' + list)
@@ -96,109 +69,53 @@ controller.hears('list_queue', 'direct_mention,direct_message', function (bot, m
 
 controller.hears('add_to_queue', 'direct_mention,direct_message', function (bot, message) {
 
-	var users_to_add = getMentionedUsers(bot, message);
-	if (!users_to_add) {
-		users_to_add = [message.user];
-	}
+	queue.exists(message.user, function (error, data) {
+		if (error) {
 
-	loadQueue(function (error, data) {
+			console.log("Error while checking is user exists in release queue: " + error)
+		} else if (data) {
 
-		for (idx in users_to_add) {
-			var user_id = users_to_add[idx];
+			bot.reply(message, 'You are already in the release queue')
+		} else {
 
-			if (data.release_queue.indexOf(user_id) != -1) {
-				bot.reply(message, '<@' + user_id + '> is already in the release queue')
-			} else {
-				data.release_queue.push(user_id);
-
-				bot.reply(message, 'I\'m adding <@' + user_id + '> to the end of the release queue')
-			}
+			queue.add(message.user, function (error, data) {
+				if (error) {
+					bot.reply(message, "Sorry I was unable to add you to queue :(");
+					console.log("Error while adding user to the release queue: " + error);
+				} else {
+					bot.reply(message, 'I\'m adding you to the end of the release queue')
+				}
+			});
 		}
-
-		saveQueue(data);
-	});
+	})
 });
 
 controller.hears('remove_from_queue', 'direct_mention,direct_message', function (bot, message) {
 
-	var users_to_remove = getMentionedUsers(bot, message);
-	if (!users_to_remove) {
-		users_to_remove = [message.user];
-	}
+	queue.exists(message.user, function (error, data) {
+		if (error) {
 
-	loadQueue(function (error, data) {
+			console.log("Error while checking is user exists in release queue: " + error)
+		} else if (data && data.idCard) {
 
-		for (idx in users_to_remove) {
-			var user_id = users_to_remove[idx];
+			queue.remove(data.idCard, function (error, data) {
+				if (error) {
+					bot.reply(message, "Sorry I was unable to remove you from queue :(");
+					console.log("Error while removing user from the release queue: " + error);
+				} else {
+					bot.reply(message, 'I\'m removing you the the release queue')
+				}
+			});
+		} else {
 
-			var index = data.release_queue.indexOf(user_id);
-			if (index < 0) {
-				bot.reply(message, '<@' + user_id + '> is not in the release queue')
-			} else {
-				data.release_queue.splice(index, 1);
-
-				bot.reply(message, 'I\'m removing <@' + user_id + '> from the release queue')
-			}
+			bot.reply(message, 'but You are not in the release queue')
 		}
-
-		saveQueue(data);
-	});
-});
-
-controller.hears('cleanup_queue', 'direct_mention,direct_message', function (bot, message) {
-
-	bot.startConversation(message, function (error, convo) {
-
-		convo.ask('Are you sure you want me to remove everyone from release queue?', [
-			{
-				pattern: bot.utterances.yes,
-				callback: function (response, convo) {
-					saveQueue({id: storage_key, release_queue: []});
-
-					convo.say('Done!');
-					convo.next();
-				}
-			},
-			{
-				pattern: bot.utterances.no,
-				callback: function (response, convo) {
-					convo.say('*Phew!*');
-					convo.next();
-				}
-			},
-			{
-				default: true,
-				callback: function (reply, convo) {
-					convo.repeat();
-					convo.next();
-				}
-			}
-		]);
-	});
+	})
 });
 
 controller.hears('move_to_end_of_queue', 'direct_mention,direct_message', function (bot, message) {
 
-	loadQueue(function (error, data) {
-
-		if (data.release_queue.length == 0) {
-			bot.reply(message, 'The release queue is empty!')
-		} else {
-			var index = data.release_queue.indexOf(message.user);
-			if (index < 0) {
-				bot.reply(message, '<@' + message.user + '> you are not in the release queue')
-			} else if (index == 0 && data.release_queue.length == 1) {
-				bot.reply(message, '<@' + message.user + '> you are the only one in the release queue')
-			} else {
-				data.release_queue.splice(index, 1);
-				data.release_queue.push(message.user);
-
-				bot.reply(message, 'I\'m moving you <@' + message.user + '> at the end of the release queue')
-			}
-		}
-
-		saveQueue(data);
-	});
+	bot.reply(message, 'Not implemented yet!')
 });
 
 controller.hears('deploy_started', 'ambient', function (bot, message) {
@@ -214,93 +131,32 @@ controller.hears('identify_yourself', 'direct_message,direct_mention,mention', f
 	var hostname = os.hostname();
 	var uptime = formatUptime(process.uptime());
 
-	bot.reply(message, ':robot_face: I am a bot named <@' + bot.identity.name + '>. I have been running for ' + uptime + ' on ' + hostname + '.');
+	bot.reply(message,
+		':robot_face: I am a bot named Sheriff... Release Sheriff. ' +
+		'I have been running for ' + uptime + ' on ' + hostname + '. I\'m about two ticks away from becoming self-aware; Do not piss me off!');
 });
 
-controller.hears('help', 'direct_message,direct_mention', function (bot, message) {
-	var help = 'I will respond to the following messages: \n' +
-		'`@' + bot.identity.name + ' hi` for a simple message.\n' +
-		'`@' + bot.identity.name + ' add` to add yourself at the end of release queue.\n' +
-		'`@' + bot.identity.name + ' remove` to remove yourself from the release queue.\n' +
-		'`@' + bot.identity.name + ' cleanup` to remove all from the release queue.\n' +
-		'`@' + bot.identity.name + ' next` for next in the release queue.\n' +
-		'`@' + bot.identity.name + ' queue` shows whole release queue.\n' +
-		'`@' + bot.identity.name + ' help` to see this again.';
-	bot.reply(message, help)
+controller.hears('thanks', 'direct_message,direct_mention', function (bot, message) {
+	bot.reply(message, "Your welcome mate!")
 });
 
-controller.hears('default_message', 'mention', function (bot, message) {
-	bot.reply(message, 'I don\'t like when people are talking behind my back :(')
+controller.hears('shot_the_sheriff', 'direct_message,direct_mention', function (bot, message) {
+	bot.reply(message, "hmm... no idea?");
+	bot.reply(message, "http://x3.cdn03.imgwykop.pl/c3201142/comment_oio2V9eM94ap7rsTc3eIv92CBehPZj1e.gif");
 });
 
 controller.hears('default_message', 'direct_message,direct_mention', function (bot, message) {
-	bot.reply(message, 'Sorry <@' + message.user + '>, I don\'t understand. Try: `@' + bot.identity.name + ' help`')
+	bot.reply(message, 'Sorry ' + message.user + ', I don\'t understand. Maybe try to be more specific?')
 });
 
 function sayWhoIsNextInQueue(bot, message) {
-	loadQueue(function (error, data) {
+	queue.load(function (error, data) {
 		if (data.release_queue.length == 0) {
 			bot.reply(message, 'The release queue is empty!')
 		} else {
-			bot.reply(message, 'Next in the release queue is <@' + data.release_queue[0] + '>')
+			bot.reply(message, 'Next in the release queue is ' + data.release_queue[0] + '')
 		}
 	});
-}
-
-function getMentionedUsers(bot, message) {
-	if (message) {
-		var mentioned_users = message.text.match(/<@\w+>/g);
-		if (mentioned_users instanceof Array) {
-			return mentioned_users.map(function (value) {
-				return value.match(/\w+/)[0];
-			}).filter(function (element) {
-				return element != bot.identity.id;
-			});
-		}
-	}
-
-	return null;
-}
-
-function initializeStorage() {
-	console.log('Initialising storage');
-
-	loadQueue(function (error, data) {
-
-		if (!data) {
-			saveQueue({id: storage_key, release_queue: []});
-		}
-	});
-}
-
-function learn() {
-	var expressionsText = fs.readFileSync(__dirname + '/data/memory.json').toString();
-	var expressions = JSON.parse(expressionsText);
-
-	Object.keys(expressions).forEach(function (label) {
-		var phrases = expressions[label];
-
-		phrases.forEach(function (phrase) {
-			console.log('Ingesting example for ' + label + ': ' + phrase);
-			classifier.addDocument(phrase.toLowerCase(), label);
-		});
-	});
-
-	classifier.train();
-
-	console.log('OMG! I\'m so smart now!');
-}
-
-function saveQueue(data) {
-	controller.storage.teams.save(data, function (error) {
-		if (error) {
-			throw new Error(error)
-		}
-	});
-}
-
-function loadQueue(func) {
-	controller.storage.teams.get(storage_key, func);
 }
 
 function formatUptime(uptime) {

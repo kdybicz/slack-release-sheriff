@@ -2,52 +2,57 @@
   "hello": [
 	"hello",
 	"hi",
-	"czesc",
-	"cześć",
-	"what’s up"
+	"howdy",
+	"hiya",
+	"what’s up",
+	"wassup",
+	"hia",
+	"heya"
   ],
   "add_to_queue": [
+	"add me",
 	"add me please",
 	"add me to the queue",
+	"can you add me to the queue?",
 	"please add me",
 	"please add me to the queue"
   ],
   "remove_from_queue": [
-	"please remove me",
-	"please remove me from the queue",
-	"remove all",
 	"remove me",
-	"remove me from the queue"
-  ],
-  "cleanup_queue": [
-	"clean the queue",
-	"cleanup"
+	"remove me please",
+	"remove me from the queue",
+	"can you remove me from the queue?",
+	"please remove me",
+	"please remove me from the queue"
   ],
   "list_queue": [
 	"list",
-	"queue",
+	"list queue",
+	"show queue",
 	"show me the queue",
+	"can you show me the queue?",
+	"queue",
 	"status",
 	"status?",
-	"what is the status of release queue?",
 	"what is the status?",
-	"who is in release queue?"
+	"what is the status of release queue?",
+	"who is in release queue?",
+	"who is in queue?"
   ],
   "move_to_end_of_queue": [
+	"skip",
+	"skip the queue",
 	"move me to bottom",
 	"move me to end",
 	"move me to the end",
-	"skip",
-	"skip the queue"
+	"can you move me the end of queue?",
+	"can you move me the bottom of queue?"
   ],
   "next_in_queue": [
 	"next?",
 	"who next?",
-	"who's next",
-	"whos next?",
-	"who’s next",
-	"who’s next in release queue?",
-	"who’s next?"
+	"who's next?",
+	"who’s next in release queue?"
   ],
   "deploy_started": [
 	"A deployment has just been started!"
@@ -60,5 +65,12 @@
 	"what are you?",
 	"what is your name?",
 	"who are you?"
+  ],
+  "thanks": [
+	"thanks",
+	"cheers"
+  ],
+  "shot_the_sheriff": [
+	"who shot the sheriff?"
   ]
 }

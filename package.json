@@ -1,7 +1,7 @@
 {
   "name": "slack-release-sheriff",
   "version": "1.0.0",
-  "description": "Release Sheriff is a Slack bot tryung to help keep a track on single feature releases.",
+  "description": "Release Sheriff is a Slack bot trying to help keep a track on single feature releases.",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
@@ -22,9 +22,8 @@
   },
   "homepage": "https://github.com/kdybicz/slack-release-sheriff#readme",
   "dependencies": {
-    "beepboop-botkit": "^1.4.1",
     "botkit": "^0.4.0",
     "natural": "^0.4.0",
-    "sentiment": "^2.1.0"
+    "node-trello": "^1.1.2"
   }
 }

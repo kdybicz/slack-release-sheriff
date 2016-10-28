@@ -1,19 +1,13 @@
-# starter-node-bot
+# slack-release-sheriff
 
 ## Overview
-A simple starting point for creating a Beep Boop hostable, Node.js based Slack bot with botkit
-
-Visit [Beep Boop](https://beepboophq.com/docs/article/overview) to get the scoop on the the Beep Boop hosting platform. The Slack API documentation can be found [here](https://api.slack.com/).
-
-## Assumptions
-* You have already signed up with [Beep Boop](https://beepboophq.com) and have a local fork of this project.
-* You have sufficient rights in your Slack team to configure a bot and generate/access a Slack API token.
+Release Sheriff is a Slack bot trying to help keep a track on single feature releases.
 
 ## Usage
 
 ### Run locally
 	npm install
-	SLACK_TOKEN=<YOUR_SLACK_TOKEN> npm start
+	SLACK_TOKEN=<YOUR_SLACK_TOKEN> TRELLO_APP_KEY=<YOUR_APP_KEY> TRELLO_USER_TOKEN=<USER_TOKEN> npm start
 
 Things are looking good if the console prints something like:
 
@@ -23,16 +17,15 @@ Things are looking good if the console prints something like:
 
 ### Run locally in Docker
 	docker build -t starter-node .`
-	docker run --rm -it -e SLACK_TOKEN=<YOUR SLACK API TOKEN> starter-node
-
-### Run in BeepBoop
-If you have linked your local repo with the Beep Boop service (check [here](https://beepboophq.com/0_o/my-projects)), changes pushed to the remote master branch will automatically deploy.
+	docker run --rm -it -e SLACK_TOKEN=<YOUR_SLACK_TOKEN> -e TRELLO_APP_KEY=<YOUR_APP_KEY> -e TRELLO_USER_TOKEN=<USER_TOKEN> starter-node
 
 ## Acknowledgements
 
-This code uses the [botkit](https://github.com/howdyai/botkit) npm module by the fine folks at Howdy.ai.
+This code uses the :
++ [botkit](https://github.com/howdyai/botkit) npm module.
++ [NLP](https://github.com/NaturalNode/natural) npm module.
++ [node-trello](https://github.com/adunkman/node-trello) npm module.
 
 ## License
 
 See the [LICENSE](LICENSE.md) file (MIT).
-
