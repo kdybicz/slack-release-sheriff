@@ -5,6 +5,14 @@ Release Sheriff is a Slack bot trying to help keep a track on single feature rel
 
 ## Usage
 
+### Trello credentials
+
+#### Getting Trello app key
+	https://trello.com/app-key
+
+#### Getting Trello user token
+	https://trello.com/1/authorize?expiration=never&scope=read,write,account&response_type=token&name=Release%20Sherif&key=<YOUR_APP_KEY>
+
 ### Run locally
 	npm install
 	SLACK_TOKEN=<YOUR_SLACK_TOKEN> TRELLO_APP_KEY=<YOUR_APP_KEY> TRELLO_USER_TOKEN=<USER_TOKEN> npm start
